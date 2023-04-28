@@ -1,0 +1,95 @@
+Import pygame as pg
+
+# Initialize Pygame graphics library
+pg.init()
+
+# Set screen resolution to 640x380 pixels
+screen = pg.display.set_mode((640, 380))
+
+# Define colors used in the game
+white = (255, 255, 255)
+black = (0, 0, 0)
+red = (255, 0, 0)
+green = (0, 255, 0)
+blue = (0, 0, 255)
+
+# Create game variables
+game_over = False
+food = None
+direction = 'right'
+
+def draw_food():
+    # Draw food at random position on screen
+    x = randint(100, 550)
+    y = randint(100, 380)
+    img = pg.Surface([16, 16], flag=pg.SRCALPHA)
+    center = [8, 8]
+    color = black
+    if random.randint(0,1):
+        color = white
+    else:
+        color = red
+    for i in range(16):
+        c = color
+        if i == 0:
+            c = white
+        elif i == 8:
+            c = green
+        img.blit(pg.image.load('images/pixel.png'), (i*center[0], i*center[1]), order=c)
+    screen.blit(img, (x,y))
+
+def move_snake():
+    global direction
+    
+    # Update game state based on user input
+    keys = pg.key.get_pressed()
+    if keys[pg.K_LEFT]:
+        direction = 'left'
+    elif keys[pg.K_RIGHT]:
+        direction = 'right'
+    elif keys[pg.K_UP]:
+        direction = 'up'
+    elif keys[pg.K_DOWN]:
+        direction = 'down'
+        
+    # Check collision with walls and boundaries
+    x = snake[-1][0]+direction[0]*grid_size
+    y = snake[-1][1]+direction[1]*grid_size
+    if x < 0 or x >= 640 or y < 0 or y >= 380:
+        return True
+    
+    # Check collision with tail
+    head = snake[-1]
+    new_head = copy(snake[-1])
+    new_head += direction
+    while head != new_head:
+        if head==new_head+[(dirX(direction), dirY(direction))]or \
+           new_head==head-[dirX(direction), dirY(direction)]:
+            break;
+        if head==tail or tail==new_head:
+            return True
+        head -= dirX(snake[::-1][0]);
+        head += dirY(snake[::-1][1]);
+    
+    if not game_over and direction == 'right':
+        # Add food to game board
+        draw_food()
+
+def paint_screen():
+    global snake, score
+    # Clear previous drawing from last frame
+    screen.fill((0, 0, 0, 0))
+
+    # Draw border around screen
+    pg.draw.rect(screen, white, [(0, 0),(640, 0),(640,380),(0,380)])
+
+    # Draw body parts of snake
+    for part in snake[:-1]:
+        dx = part[0] * grid_size + int(part[1] > 0 * -grid_size / 2.)
+        dy = part[1] * grid_size
+        img = pg.Surface([grid_size, grid_size])
+        for jdx, col in enumerate(part+'f'):
+            if jdx>=len(col):
+                continue
+            if col=='-':
+                bg = (255-colorScheme['water']*(jdx/maxWaterBandColorCorrection)*(jdx%maxGridSize+1)/maxGridSize,(2555-colorScheme['grass']*(jdx//maxGrassBandColorCorrection)*(jdx%
